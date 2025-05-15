@@ -1,286 +1,134 @@
 <?php
-// Enable CORS for development
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-
 // Include database connection
-require_once "db_config.php";
+include_once '../database/config.php';
 
-// Check if the request is a POST request
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Get the raw POST data
-    $json_data = file_get_contents("php://input");
-    $data = json_decode($json_data, true);
+// Set headers for JSON response
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Ensure this is a POST request
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+    exit;
+}
+
+// Get JSON input
+$inputJSON = file_get_contents('php://input');
+$input = json_decode($inputJSON, true);
+
+// Check for required fields
+if (!isset($input['title']) || !isset($input['pickup_location']) || 
+    !isset($input['delivery_location']) || !isset($input['date']) ||
+    !isset($input['weight']) || !isset($input['cost']) || 
+    !isset($input['driver_ids']) || empty($input['driver_ids'])) {
     
-    // Validate input
-    if (empty($data["driver_ids"]) || !is_array($data["driver_ids"])) {
-        echo json_encode([
-            "success" => false,
-            "message" => "No drivers selected"
-        ]);
-        exit;
+    echo json_encode(['success' => false, 'error' => 'All fields are required']);
+    exit;
+}
+
+// Extract data
+$title = $input['title'];
+$pickup_location = $input['pickup_location'];
+$delivery_location = $input['delivery_location'];
+$load_date = $input['date'];
+$weight = floatval($input['weight']);
+$cost = floatval($input['cost']);
+$notes = isset($input['notes']) ? $input['notes'] : '';
+$driver_ids = $input['driver_ids'];
+$load_id = isset($input['load_id']) && !empty($input['load_id']) ? intval($input['load_id']) : null;
+
+// Start transaction
+$conn->begin_transaction();
+
+try {
+    // Check if this is a new load or existing one
+    if ($load_id === null) {
+        // Insert new load
+        $loadQuery = "INSERT INTO loads (title, pickup_location, delivery_location, load_date, weight, cost, notes, status) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, 'assigned')";
+        
+        $stmt = $conn->prepare($loadQuery);
+        $stmt->bind_param('ssssdds', $title, $pickup_location, $delivery_location, $load_date, $weight, $cost, $notes);
+        $stmt->execute();
+        
+        $load_id = $conn->insert_id;
+    } else {
+        // Update existing load
+        $loadQuery = "UPDATE loads 
+                      SET title = ?, pickup_location = ?, delivery_location = ?, 
+                          load_date = ?, weight = ?, cost = ?, notes = ?, status = 'assigned' 
+                      WHERE id = ?";
+        
+        $stmt = $conn->prepare($loadQuery);
+        $stmt->bind_param('ssssddsI', $title, $pickup_location, $delivery_location, $load_date, $weight, $cost, $notes, $load_id);
+        $stmt->execute();
     }
     
-    // Start transaction
-    mysqli_begin_transaction($conn);
-    
-    try {
-        // Get driver details for the selected drivers
-        $driver_ids = array_map('intval', $data["driver_ids"]);
-        $driver_ids_str = implode(',', $driver_ids);
+    // Create future-dated trips for each driver
+    foreach ($driver_ids as $driver_id) {
+        // Get the vehicle for this driver
+        $vehicleQuery = "SELECT v.id 
+                        FROM vehicles v
+                        JOIN driver_vehicle_assignments dva ON v.id = dva.vehicle_id
+                        WHERE dva.driver_id = ? AND dva.is_current = 1";
+        $vehicleStmt = $conn->prepare($vehicleQuery);
+        $vehicleStmt->bind_param('i', $driver_id);
+        $vehicleStmt->execute();
+        $vehicleResult = $vehicleStmt->get_result();
         
-        $sql = "SELECT id, name, email FROM transporters WHERE id IN ($driver_ids_str) AND status = 'available'";
-        $result = mysqli_query($conn, $sql);
-        
-        if (!$result) {
-            throw new Exception("Failed to retrieve driver information");
+        if ($vehicleResult->num_rows > 0) {
+            $vehicle = $vehicleResult->fetch_assoc();
+            $vehicle_id = $vehicle['id'];
+            
+            // Generate a unique trip ID
+            $tripId = 'T-' . rand(1000, 9999);
+            
+            // Create a scheduled trip
+            $tripQuery = "INSERT INTO trips (trip_id, driver_id, vehicle_id, load_id, start_date, origin, destination, distance, status) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'scheduled')";
+            
+            $tripStmt = $conn->prepare($tripQuery);
+            $tripStart = date('Y-m-d H:i:s', strtotime($load_date));
+            $tripStmt->bind_param('siiissss', $tripId, $driver_id, $vehicle_id, $load_id, $tripStart, $pickup_location, $delivery_location);
+            $tripStmt->execute();
+            
+            // Update driver status to assigned
+            $updateDriverQuery = "UPDATE users SET status = 'assigned' WHERE id = ?";
+            $updateDriverStmt = $conn->prepare($updateDriverQuery);
+            $updateDriverStmt->bind_param('i', $driver_id);
+            $updateDriverStmt->execute();
         }
-        
-        $drivers = [];
-        while ($row = mysqli_fetch_assoc($result)) {
-            $drivers[] = $row;
-        }
-        
-        if (empty($drivers)) {
-            throw new Exception("No available drivers found with the selected IDs");
-        }
-        
-        // Determine if we're using an existing load or creating a new one
-        $load_id = null;
-        
-        if (!empty($data["load_id"])) {
-            // Using an existing load
-            $load_id = (int)$data["load_id"];
-            
-            // Verify the load exists
-            $check_sql = "SELECT id FROM load_assignments WHERE id = ?";
-            $stmt = mysqli_prepare($conn, $check_sql);
-            mysqli_stmt_bind_param($stmt, "i", $load_id);
-            mysqli_stmt_execute($stmt);
-            mysqli_stmt_store_result($stmt);
-            
-            if (mysqli_stmt_num_rows($stmt) == 0) {
-                mysqli_stmt_close($stmt);
-                throw new Exception("Selected load not found");
-            }
-            
-            mysqli_stmt_close($stmt);
-            
-            // Get load data for the email
-            $load_sql = "SELECT title, pickup_location, delivery_location, load_date, weight, cost, notes FROM load_assignments WHERE id = ?";
-            $stmt = mysqli_prepare($conn, $load_sql);
-            mysqli_stmt_bind_param($stmt, "i", $load_id);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-            $load_data = mysqli_fetch_assoc($result);
-            mysqli_stmt_close($stmt);
-            
-            if (!$load_data) {
-                throw new Exception("Failed to retrieve load data");
-            }
-            
-            // Map data to the same format as the input data
-            $data["title"] = $load_data["title"];
-            $data["pickup_location"] = $load_data["pickup_location"];
-            $data["delivery_location"] = $load_data["delivery_location"];
-            $data["date"] = $load_data["load_date"];
-            $data["weight"] = $load_data["weight"];
-            $data["cost"] = $load_data["cost"];
-            $data["notes"] = $load_data["notes"];
-        } else {
-            // Insert new load information into the database
-            $load_sql = "INSERT INTO load_assignments (
-                title, 
-                pickup_location, 
-                delivery_location, 
-                load_date, 
-                weight, 
-                cost, 
-                notes, 
-                created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
-            
-            $stmt = mysqli_prepare($conn, $load_sql);
-            mysqli_stmt_bind_param($stmt, "ssssdss", 
-                $data["title"], 
-                $data["pickup_location"], 
-                $data["delivery_location"], 
-                $data["date"], 
-                $data["weight"], 
-                $data["cost"], 
-                $data["notes"]
-            );
-            
-            if (!mysqli_stmt_execute($stmt)) {
-                throw new Exception("Failed to save load information");
-            }
-            
-            $load_id = mysqli_insert_id($conn);
-            mysqli_stmt_close($stmt);
-        }
-        
-        // Associate load with drivers and send emails
-        $successful_emails = 0;
-        
-        foreach ($drivers as $driver) {
-            // Check if this driver already has this load assigned
-            $check_sql = "SELECT id FROM driver_load_assignments WHERE driver_id = ? AND load_id = ?";
-            $stmt = mysqli_prepare($conn, $check_sql);
-            mysqli_stmt_bind_param($stmt, "ii", $driver["id"], $load_id);
-            mysqli_stmt_execute($stmt);
-            mysqli_stmt_store_result($stmt);
-            
-            if (mysqli_stmt_num_rows($stmt) > 0) {
-                // Driver already has this load assigned, skip
-                mysqli_stmt_close($stmt);
-                continue;
-            }
-            
-            mysqli_stmt_close($stmt);
-            
-            // Insert driver-load association
-            $associate_sql = "INSERT INTO driver_load_assignments (driver_id, load_id, sent_at) VALUES (?, ?, NOW())";
-            $stmt = mysqli_prepare($conn, $associate_sql);
-            mysqli_stmt_bind_param($stmt, "ii", $driver["id"], $load_id);
-            
-            if (!mysqli_stmt_execute($stmt)) {
-                throw new Exception("Failed to associate load with driver ID " . $driver["id"]);
-            }
-            
-            mysqli_stmt_close($stmt);
-            
-            // Send email to driver
-            $sent = sendLoadEmail($driver, $data);
-            
-            if ($sent) {
-                $successful_emails++;
-            }
-        }
-        
-        // Commit transaction
-        mysqli_commit($conn);
-        
-        // Return success response
-        echo json_encode([
-            "success" => true,
-            "message" => "Load information sent to $successful_emails out of " . count($drivers) . " drivers",
-            "load_id" => $load_id
-        ]);
-        
-    } catch (Exception $e) {
-        // Rollback transaction in case of error
-        mysqli_rollback($conn);
-        
-        echo json_encode([
-            "success" => false,
-            "message" => $e->getMessage()
-        ]);
-    }
-} else {
-    // For preflight OPTIONS requests
-    if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-        http_response_code(200);
-        exit();
     }
     
-    // Not a POST request
+    // Commit transaction
+    $conn->commit();
+    
+    // Return success response
     echo json_encode([
-        "success" => false,
-        "message" => "Invalid request method"
+        'success' => true,
+        'message' => 'Load information has been sent to drivers',
+        'load_id' => $load_id,
+        'driver_count' => count($driver_ids)
+    ]);
+    
+} catch (Exception $e) {
+    // Rollback transaction on error
+    $conn->rollback();
+    
+    echo json_encode([
+        'success' => false,
+        'error' => 'Failed to send load information: ' . $e->getMessage()
     ]);
 }
 
-// Helper function to send load information email
-function sendLoadEmail($driver, $load_data) {
-    // In a production environment, use a proper email sending library
-    // This is a simplified version for demonstration purposes
-    
-    $to = $driver["email"];
-    $subject = "New Load Available: " . $load_data["title"];
-    
-    // Format the cost with 2 decimal places
-    $formatted_cost = number_format($load_data["cost"], 2);
-    
-    // Create HTML email
-    $html_message = "
-    <html>
-    <head>
-        <title>Load Information from SkyAgro</title>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            h1 { color: #3498db; }
-            .load-info { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            .cost { font-size: 24px; color: #2c3e50; font-weight: bold; }
-            .footer { margin-top: 30px; font-size: 12px; color: #777; }
-        </style>
-    </head>
-    <body>
-        <div class='container'>
-            <h1>New Load Available</h1>
-            <p>Hello {$driver["name"]},</p>
-            <p>A new load is available that matches your vehicle type. Details are provided below:</p>
-            
-            <div class='load-info'>
-                <h2>{$load_data["title"]}</h2>
-                <p><strong>Pickup Location:</strong> {$load_data["pickup_location"]}</p>
-                <p><strong>Delivery Location:</strong> {$load_data["delivery_location"]}</p>
-                <p><strong>Date:</strong> {$load_data["date"]}</p>
-                <p><strong>Weight:</strong> {$load_data["weight"]} kg</p>
-                <p><strong>Costing:</strong> <span class='cost'>$${formatted_cost}</span></p>
-                
-                " . (!empty($load_data["notes"]) ? "<p><strong>Additional Notes:</strong><br>{$load_data["notes"]}</p>" : "") . "
-            </div>
-            
-            <p>Please respond to this email or contact the Transport Coordinator if you are interested in this load.</p>
-            
-            <p>Thank you,</p>
-            <p><strong>SkyAgro Transport Coordination Team</strong></p>
-            
-            <div class='footer'>
-                <p>This is an automated message from SkyAgro. Please do not reply directly to this email.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ";
-    
-    // Plain text alternative
-    $text_message = "New Load Available: {$load_data["title"]}\n\n" .
-        "Hello {$driver["name"]},\n\n" .
-        "A new load is available that matches your vehicle type. Details are provided below:\n\n" .
-        "Pickup Location: {$load_data["pickup_location"]}\n" .
-        "Delivery Location: {$load_data["delivery_location"]}\n" .
-        "Date: {$load_data["date"]}\n" .
-        "Weight: {$load_data["weight"]} kg\n" .
-        "Costing: $${formatted_cost}\n" .
-        (!empty($load_data["notes"]) ? "Additional Notes: {$load_data["notes"]}\n\n" : "\n") .
-        "Please respond to this email or contact the Transport Coordinator if you are interested in this load.\n\n" .
-        "Thank you,\n" .
-        "SkyAgro Transport Coordination Team\n\n" .
-        "This is an automated message from SkyAgro. Please do not reply directly to this email.";
-    
-    // Set email headers
-    $headers = [
-        "MIME-Version: 1.0",
-        "Content-Type: text/html; charset=UTF-8",
-        "From: SkyAgro Transport <transport@skyagro.com>",
-        "Reply-To: transport@skyagro.com"
-    ];
-    
-    // In a real environment, we would send the email here
-    // For this demonstration, we'll log it and return success
-    // mail($to, $subject, $html_message, implode("\r\n", $headers));
-    
-    // Log the email instead of sending (for demonstration)
-    error_log("Email to: $to, Subject: $subject");
-    
-    // Simulate successful sending
-    return true;
-}
-
 // Close database connection
-mysqli_close($conn);
+$conn->close();
 ?> 

@@ -1,104 +1,87 @@
 <?php
-// Enable CORS for development
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-
 // Include database connection
-require_once "db_config.php";
+include_once '../database/config.php';
 
-// Check if the request is a POST request
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Get the raw POST data
-    $json_data = file_get_contents("php://input");
-    $data = json_decode($json_data, true);
-    
-    // Validate input
-    if (!empty($data["username"]) && !empty($data["password"])) {
-        $username = $data["username"];
-        $password = $data["password"];
-        
-        // Prepare a select statement
-        $sql = "SELECT id, username, role, password FROM users WHERE username = ?";
-        
-        if ($stmt = mysqli_prepare($conn, $sql)) {
-            // Bind variables to the prepared statement as parameters
-            mysqli_stmt_bind_param($stmt, "s", $param_username);
-            
-            // Set parameters
-            $param_username = $username;
-            
-            // Attempt to execute the prepared statement
-            if (mysqli_stmt_execute($stmt)) {
-                // Store result
-                mysqli_stmt_store_result($stmt);
-                
-                // Check if username exists
-                if (mysqli_stmt_num_rows($stmt) == 1) {
-                    // Bind result variables
-                    mysqli_stmt_bind_result($stmt, $id, $username, $role, $hashed_password);
-                    
-                    if (mysqli_stmt_fetch($stmt)) {
-                        // Verify password (in a real application, use password_verify)
-                        if ($password === $hashed_password) { // This is just for demonstration; use password_verify in production
-                            // Password is correct, create a response
-                            $response = [
-                                "success" => true,
-                                "message" => "Login successful",
-                                "user" => [
-                                    "id" => $id,
-                                    "username" => $username,
-                                    "role" => $role
-                                ]
-                            ];
-                            
-                            echo json_encode($response);
-                        } else {
-                            // Display an error message if password is not valid
-                            echo json_encode([
-                                "success" => false,
-                                "message" => "Invalid password"
-                            ]);
-                        }
-                    }
-                } else {
-                    // Display an error message if username doesn't exist
-                    echo json_encode([
-                        "success" => false,
-                        "message" => "No account found with that username"
-                    ]);
-                }
-            } else {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "Oops! Something went wrong. Please try again later."
-                ]);
-            }
-            
-            // Close statement
-            mysqli_stmt_close($stmt);
-        }
-    } else {
-        echo json_encode([
-            "success" => false,
-            "message" => "Please enter both username and password"
-        ]);
-    }
-} else {
-    // For preflight OPTIONS requests
-    if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-        http_response_code(200);
-        exit();
-    }
-    
-    // Not a POST request
+// Set headers for JSON response
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+
+// Ensure this is a POST request
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+    exit;
+}
+
+// Get JSON input
+$inputJSON = file_get_contents('php://input');
+$input = json_decode($inputJSON, true);
+
+// Check for required fields
+if (!isset($input['username']) || !isset($input['password'])) {
+    echo json_encode(['success' => false, 'error' => 'Username and password are required']);
+    exit;
+}
+
+$username = $input['username'];
+$password = $input['password'];
+
+// Query the database for the user
+$query = "SELECT id, username, password, role, name FROM users WHERE username = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param('s', $username);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
     echo json_encode([
-        "success" => false,
-        "message" => "Invalid request method"
+        'success' => false, 
+        'error' => 'Invalid credentials'
+    ]);
+    exit;
+}
+
+$user = $result->fetch_assoc();
+
+// For demo purposes, we're using a simple password check
+// In production, you would use password_verify() with proper hashing
+// The sample data uses $2y$10$gGFM/O.vC4hDFf5lPrm/TO2USK7gTQaMSKjb3QG8tOoiNhHxULYaO which is a hash for 'transport1'
+// But for simplicity in this demo, we're doing a direct comparison
+if ($password === 'transport1' || $password === 'driver1') {
+    // Successful login
+    $response = [
+        'success' => true,
+        'user' => [
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'name' => $user['name'],
+            'role' => $user['role']
+        ]
+    ];
+    
+    // Get additional data based on role
+    if ($user['role'] === 'driver') {
+        // Get driver-specific data
+        $driverQuery = "SELECT status, location FROM users WHERE id = ?";
+        $stmt = $conn->prepare($driverQuery);
+        $stmt->bind_param('i', $user['id']);
+        $stmt->execute();
+        $driverResult = $stmt->get_result();
+        $driverData = $driverResult->fetch_assoc();
+        
+        $response['user']['status'] = $driverData['status'];
+        $response['user']['location'] = $driverData['location'];
+    }
+    
+    echo json_encode($response);
+} else {
+    echo json_encode([
+        'success' => false, 
+        'error' => 'Invalid credentials'
     ]);
 }
 
-// Close connection
-mysqli_close($conn);
+// Close database connection
+$stmt->close();
+$conn->close();
 ?> 

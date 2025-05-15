@@ -1,0 +1,151 @@
+/* Login Page Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background-image: url('../img/pattern-bg.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-container {
+    max-width: 400px;
+    width: 90%;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.login-header {
+    text-align: center;
+    padding: 25px;
+    background-color: #f8f9fa;
+    position: relative;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.login-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #2f7a35;
+    font-weight: 600;
+}
+
+.login-header p {
+    margin: 5px 0 0;
+    font-size: 16px;
+    color: #2f7a35;
+    font-weight: 500;
+}
+
+.login-form {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    border-color: #4a90e2;
+    outline: none;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    background-color: #429245;
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.forgot-password a {
+    color: #4a90e2;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/* Pattern overlay */
+.pattern-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../img/pattern-overlay.svg');
+    background-repeat: repeat;
+    opacity: 0.1;
+    z-index: -1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .login-container {
+        width: 95%;
+    }
+    
+    .login-form {
+        padding: 20px;
+    }
+    
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .login-header h2 {
+        font-size: 20px;
+    }
+    
+    .login-header p {
+        font-size: 14px;
+    }
+} 
