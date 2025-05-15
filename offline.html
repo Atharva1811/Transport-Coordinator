@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyAgro Transport Coordinator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2f7a35;
+            margin-bottom: 30px;
+        }
+        
+        p {
+            max-width: 600px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #429245;
+        }
+        
+        .note {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <img src="img/skyagro-logo.svg" alt="SkyAgro Logo" class="logo">
+    <h1>SkyAgro Transport Coordinator</h1>
+    <p>
+        Welcome to the offline mode of the SkyAgro Transport Coordinator Portal. 
+        This version works without a PHP server by using mock data.
+    </p>
+    <a href="index.html" class="btn">Launch Portal</a>
+    
+    <div class="note">
+        <p><strong>Login Credentials:</strong></p>
+        <p>Coordinator: transport1/transport1</p>
+        <p>Driver: driver1/driver1</p>
+    </div>
+    
+    <script>
+        // Auto-redirect after 2 seconds
+        setTimeout(function() {
+            window.location.href = "index.html";
+        }, 2000);
+    </script>
+</body>
+</html> 

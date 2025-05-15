@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Performance Dashboard - SkyAgro</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/driver-profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <a href="index.html#dashboard-section" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+                <h1>Driver Performance Dashboard</h1>
+            </div>
+            <div class="user-info">
+                <span id="driver-name">John Smith</span>
+                <div class="driver-status status-available">Available</div>
+            </div>
+        </header>
+
+        <div class="driver-profile-container">
+            <div class="profile-sidebar">
+                <div class="driver-photo">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="driver-info">
+                    <h2 id="sidebar-driver-name">John Smith</h2>
+                    <p id="driver-id">ID: DR-001</p>
+                    <p id="driver-vehicle">Vehicle: Truck (T-123)</p>
+                    <p id="driver-since">Driver since: Jan 2022</p>
+                </div>
+                <div class="driver-contact">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span id="driver-phone">555-123-4567</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span id="driver-email">jsmith@skyagro.com</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="driver-location">Chicago, IL</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-primary"><i class="fas fa-phone"></i> Call</button>
+                    <button class="btn-primary"><i class="fas fa-envelope"></i> Email</button>
+                </div>
+            </div>
+            
+            <div class="profile-content">
+                <div class="metrics-overview">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <div class="metric-data">
+                            <h3>Trips Completed</h3>
+                            <p id="trips-completed">247</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-road"></i>
+                        </div>
+                        <div class="metric-data">
+                            <h3>Total Distance</h3>
+                            <p id="total-distance">15,873 km</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="metric-data">
+                            <h3>Driving Time</h3>
+                            <p id="driving-time">738 hours</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="metric-data">
+                            <h3>Idle Time</h3>
+                            <p id="idle-time">92 hours</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-coffee"></i>
+                        </div>
+                        <div class="metric-data">
+                            <h3>Breaks Taken</h3>
+                            <p id="breaks-taken">183 breaks</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-sections">
+                    <div class="section-tabs">
+                        <button class="tab-btn active" data-tab="performance">Performance</button>
+                        <button class="tab-btn" data-tab="history">Trip History</button>
+                        <button class="tab-btn" data-tab="compliance">Compliance</button>
+                        <button class="tab-btn" data-tab="maintenance">Vehicle Maintenance</button>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <!-- Performance Tab -->
+                        <div id="performance" class="tab-pane active">
+                            <div class="charts-row">
+                                <div class="chart-container">
+                                    <h3>Monthly Distance (km)</h3>
+                                    <canvas id="distanceChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>Time Utilization</h3>
+                                    <canvas id="timeUtilizationChart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="charts-row">
+                                <div class="chart-container">
+                                    <h3>Weekly Trips</h3>
+                                    <canvas id="tripsChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>Break Compliance</h3>
+                                    <canvas id="breakComplianceChart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="performance-details">
+                                <h3>Performance Metrics</h3>
+                                <div class="metrics-table-container">
+                                    <table class="metrics-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Metric</th>
+                                                <th>Last Month</th>
+                                                <th>Current Month</th>
+                                                <th>Change</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Trips Completed</td>
+                                                <td>21</td>
+                                                <td>24</td>
+                                                <td class="positive-change">+14.3%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Distance Driven (km)</td>
+                                                <td>1,458</td>
+                                                <td>1,623</td>
+                                                <td class="positive-change">+11.3%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Average Trip Time</td>
+                                                <td>4h 12m</td>
+                                                <td>3h 45m</td>
+                                                <td class="positive-change">-10.7%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Idle Time</td>
+                                                <td>8h 30m</td>
+                                                <td>7h 15m</td>
+                                                <td class="positive-change">-14.7%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Fuel Efficiency</td>
+                                                <td>7.2 l/100km</td>
+                                                <td>6.9 l/100km</td>
+                                                <td class="positive-change">+4.2%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trip History Tab -->
+                        <div id="history" class="tab-pane">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="date-range">Date Range:</label>
+                                    <select id="date-range">
+                                        <option value="7">Last 7 days</option>
+                                        <option value="30" selected>Last 30 days</option>
+                                        <option value="90">Last 90 days</option>
+                                        <option value="365">Last year</option>
+                                    </select>
+                                </div>
+                                <div class="search-box">
+                                    <input type="text" placeholder="Search trips...">
+                                    <button><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="trips-table-container">
+                                <table class="trips-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Trip ID</th>
+                                            <th>Date</th>
+                                            <th>Origin</th>
+                                            <th>Destination</th>
+                                            <th>Distance</th>
+                                            <th>Duration</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>T-1089</td>
+                                            <td>15 Jun 2023</td>
+                                            <td>SkyAgro Warehouse</td>
+                                            <td>Farm B - 456 Country Lane</td>
+                                            <td>78 km</td>
+                                            <td>1h 45m</td>
+                                            <td><span class="status status-completed">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>T-1085</td>
+                                            <td>13 Jun 2023</td>
+                                            <td>SkyAgro Supply Center</td>
+                                            <td>Multiple Farms (Route #32)</td>
+                                            <td>145 km</td>
+                                            <td>4h 20m</td>
+                                            <td><span class="status status-completed">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>T-1076</td>
+                                            <td>10 Jun 2023</td>
+                                            <td>Farm A - 123 Rural Road</td>
+                                            <td>SkyAgro Processing Plant</td>
+                                            <td>92 km</td>
+                                            <td>2h 10m</td>
+                                            <td><span class="status status-completed">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>T-1065</td>
+                                            <td>7 Jun 2023</td>
+                                            <td>SkyAgro Distribution Center</td>
+                                            <td>Regional Market #5</td>
+                                            <td>187 km</td>
+                                            <td>3h 50m</td>
+                                            <td><span class="status status-completed">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>T-1047</td>
+                                            <td>2 Jun 2023</td>
+                                            <td>SkyAgro Warehouse</td>
+                                            <td>Farm C - 789 Rural Highway</td>
+                                            <td>112 km</td>
+                                            <td>2h 30m</td>
+                                            <td><span class="status status-completed">Completed</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="pagination">
+                                <button><i class="fas fa-chevron-left"></i></button>
+                                <button class="active">1</button>
+                                <button>2</button>
+                                <button>3</button>
+                                <button>4</button>
+                                <button>5</button>
+                                <button><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        
+                        <!-- Compliance Tab -->
+                        <div id="compliance" class="tab-pane">
+                            <div class="compliance-overview">
+                                <div class="compliance-card good">
+                                    <div class="compliance-value">93%</div>
+                                    <div class="compliance-label">Overall Compliance</div>
+                                </div>
+                                
+                                <div class="compliance-details">
+                                    <h3>Compliance Details</h3>
+                                    <div class="compliance-item">
+                                        <div class="compliance-metric">
+                                            <div class="compliance-name">Break Compliance</div>
+                                            <div class="compliance-score good">98%</div>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 98%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="compliance-item">
+                                        <div class="compliance-metric">
+                                            <div class="compliance-name">Hours of Service</div>
+                                            <div class="compliance-score good">95%</div>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 95%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="compliance-item">
+                                        <div class="compliance-metric">
+                                            <div class="compliance-name">Speed Adherence</div>
+                                            <div class="compliance-score warning">87%</div>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill warning" style="width: 87%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="compliance-item">
+                                        <div class="compliance-metric">
+                                            <div class="compliance-name">Documentation</div>
+                                            <div class="compliance-score good">92%</div>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 92%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="license-certification">
+                                <h3>License & Certification</h3>
+                                <div class="document-list">
+                                    <div class="document-item">
+                                        <div class="document-icon">
+                                            <i class="fas fa-id-card"></i>
+                                        </div>
+                                        <div class="document-details">
+                                            <h4>Driver's License</h4>
+                                            <p>License #: DL-456789</p>
+                                            <p>Expiration: 12/15/2025</p>
+                                        </div>
+                                        <div class="document-status valid">
+                                            <i class="fas fa-check-circle"></i> Valid
+                                        </div>
+                                    </div>
+                                    <div class="document-item">
+                                        <div class="document-icon">
+                                            <i class="fas fa-certificate"></i>
+                                        </div>
+                                        <div class="document-details">
+                                            <h4>Commercial Driver Certification</h4>
+                                            <p>Cert #: CDC-78901</p>
+                                            <p>Expiration: 08/30/2024</p>
+                                        </div>
+                                        <div class="document-status valid">
+                                            <i class="fas fa-check-circle"></i> Valid
+                                        </div>
+                                    </div>
+                                    <div class="document-item">
+                                        <div class="document-icon">
+                                            <i class="fas fa-truck"></i>
+                                        </div>
+                                        <div class="document-details">
+                                            <h4>Hazardous Materials Endorsement</h4>
+                                            <p>Endorsement #: HME-12345</p>
+                                            <p>Expiration: 05/10/2023</p>
+                                        </div>
+                                        <div class="document-status expired">
+                                            <i class="fas fa-exclamation-circle"></i> Expired
+                                        </div>
+                                    </div>
+                                    <div class="document-item">
+                                        <div class="document-icon">
+                                            <i class="fas fa-medkit"></i>
+                                        </div>
+                                        <div class="document-details">
+                                            <h4>Medical Certificate</h4>
+                                            <p>Cert #: MC-23456</p>
+                                            <p>Expiration: 11/22/2024</p>
+                                        </div>
+                                        <div class="document-status valid">
+                                            <i class="fas fa-check-circle"></i> Valid
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Vehicle Maintenance Tab -->
+                        <div id="maintenance" class="tab-pane">
+                            <div class="vehicle-info">
+                                <div class="vehicle-card">
+                                    <div class="vehicle-header">
+                                        <h3>Assigned Vehicle Details</h3>
+                                    </div>
+                                    <div class="vehicle-details">
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">Vehicle ID:</span>
+                                            <span class="detail-value">T-123</span>
+                                        </div>
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">Type:</span>
+                                            <span class="detail-value">Delivery Truck</span>
+                                        </div>
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">Make/Model:</span>
+                                            <span class="detail-value">Ford F-650</span>
+                                        </div>
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">Year:</span>
+                                            <span class="detail-value">2021</span>
+                                        </div>
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">License Plate:</span>
+                                            <span class="detail-value">AGR-7890</span>
+                                        </div>
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">Current Odometer:</span>
+                                            <span class="detail-value">43,567 km</span>
+                                        </div>
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">Fuel Type:</span>
+                                            <span class="detail-value">Diesel</span>
+                                        </div>
+                                        <div class="vehicle-detail-item">
+                                            <span class="detail-label">Last Inspection:</span>
+                                            <span class="detail-value">May 12, 2023</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="maintenance-status">
+                                    <h3>Maintenance Status</h3>
+                                    <div class="maintenance-items">
+                                        <div class="maintenance-item good">
+                                            <div class="maintenance-icon">
+                                                <i class="fas fa-oil-can"></i>
+                                            </div>
+                                            <div class="maintenance-details">
+                                                <h4>Oil Change</h4>
+                                                <div class="maintenance-progress">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-fill" style="width: 35%"></div>
+                                                    </div>
+                                                    <div class="progress-text">35% to next service</div>
+                                                </div>
+                                                <p>Last Service: 2,500 km ago</p>
+                                                <p>Next Service: ~5,000 km</p>
+                                            </div>
+                                        </div>
+                                        <div class="maintenance-item warning">
+                                            <div class="maintenance-icon">
+                                                <i class="fas fa-cogs"></i>
+                                            </div>
+                                            <div class="maintenance-details">
+                                                <h4>Transmission Service</h4>
+                                                <div class="maintenance-progress">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-fill warning" style="width: 78%"></div>
+                                                    </div>
+                                                    <div class="progress-text">78% to next service</div>
+                                                </div>
+                                                <p>Last Service: 38,900 km</p>
+                                                <p>Next Service: ~45,000 km</p>
+                                            </div>
+                                        </div>
+                                        <div class="maintenance-item alert">
+                                            <div class="maintenance-icon">
+                                                <i class="fas fa-tachometer-alt"></i>
+                                            </div>
+                                            <div class="maintenance-details">
+                                                <h4>Brake Inspection</h4>
+                                                <div class="maintenance-progress">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-fill alert" style="width: 92%"></div>
+                                                    </div>
+                                                    <div class="progress-text alert">92% to next service</div>
+                                                </div>
+                                                <p>Last Service: 22,300 km ago</p>
+                                                <p>Next Service: Due in ~2,000 km</p>
+                                            </div>
+                                        </div>
+                                        <div class="maintenance-item good">
+                                            <div class="maintenance-icon">
+                                                <i class="fas fa-filter"></i>
+                                            </div>
+                                            <div class="maintenance-details">
+                                                <h4>Air Filter</h4>
+                                                <div class="maintenance-progress">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-fill" style="width: 45%"></div>
+                                                    </div>
+                                                    <div class="progress-text">45% to next service</div>
+                                                </div>
+                                                <p>Last Service: 10,500 km ago</p>
+                                                <p>Next Service: ~12,000 km</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/driver-profile.js"></script>
+</body>
+</html> 

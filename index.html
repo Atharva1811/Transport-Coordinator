@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyAgro Transport Coordinator</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div id="login-section" class="section">
+        <div class="pattern-overlay"></div>
+        <div class="login-container">
+            <div class="login-header">
+                <img src="img/skyagro-logo.svg" alt="SkyAgro Logo" class="logo">
+                <h2>SKYAGRO</h2>
+                <p>Transport Coordinator Portal</p>
+            </div>
+            <div class="login-form">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="login-btn">LOGIN</button>
+                </form>
+                <div class="forgot-password">
+                    <a href="#">Forgot Password?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section (Hidden by default) -->
+    <div id="dashboard-section" class="section hidden">
+        <header class="dashboard-header">
+            <h1>Transport Coordinator Dashboard</h1>
+            <div class="user-info">
+                <span id="user-name">User</span>
+                <button id="logout-btn" class="btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <div class="stats-container">
+            <div class="stat-box">
+                <h3>Total Transporters</h3>
+                <p id="total-transporters">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Available Today</h3>
+                <p id="available-today">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Assigned Orders</h3>
+                <p id="assigned-orders">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>New Transporters</h3>
+                <p id="new-transporters">0</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="drivers-list-container">
+                <div class="list-header">
+                    <h2>Transporters List</h2>
+                    <div class="action-buttons">
+                        <button id="send-loads-btn" class="btn-primary">Send Loads to Available Drivers</button>
+                        <button id="add-driver-btn" class="btn-primary">Add New Transporter</button>
+                    </div>
+                </div>
+                
+                <table id="drivers-table">
+                    <thead>
+                        <tr>
+                            <th>Profile</th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Vehicle Type</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="drivers-list">
+                        <!-- Drivers will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forward Driver Modal - Moved outside the container -->
+    <div id="forward-modal" class="modal hidden" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Forward to Dispatch Coordinator</h2>
+            <form id="forward-form">
+                <input type="hidden" id="driver-id" name="driver-id">
+                
+                <div class="form-group">
+                    <label for="driver-name">Driver Name</label>
+                    <input type="text" id="driver-name" name="driver-name" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date-time">Date & Time</label>
+                    <input type="text" id="date-time" name="date-time" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Notes for Dispatch</label>
+                    <textarea id="notes" name="notes" rows="4"></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary">Forward to Dispatch</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Loads Modal -->
+    <div id="send-loads-modal" class="modal hidden" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal" data-modal="send-loads-modal">&times;</span>
+            <h2>Send Load Information to Available Drivers</h2>
+            <form id="send-loads-form">
+                <div class="form-group">
+                    <label for="load-select">Select Existing Load</label>
+                    <select id="load-select" name="load-select">
+                        <option value="">-- Create New Load --</option>
+                        <!-- Existing loads will be populated here -->
+                    </select>
+                </div>
+                
+                <div id="load-details-container">
+                    <div class="form-group">
+                        <label for="load-title">Load Title</label>
+                        <input type="text" id="load-title" name="load-title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pickup-location">Pickup Location</label>
+                        <input type="text" id="pickup-location" name="pickup-location" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="delivery-location">Delivery Location</label>
+                        <input type="text" id="delivery-location" name="delivery-location" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="load-date">Date</label>
+                        <input type="date" id="load-date" name="load-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="load-weight">Weight (kg)</label>
+                        <input type="number" id="load-weight" name="load-weight" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="load-cost">Estimated Cost ($)</label>
+                        <input type="number" id="load-cost" name="load-cost" step="0.01" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="load-notes">Additional Notes</label>
+                        <textarea id="load-notes" name="load-notes" rows="4"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="select-all-drivers" name="select-all-drivers">
+                        Select All Available Drivers
+                    </label>
+                </div>
+                
+                <div class="form-group" id="available-drivers-list">
+                    <!-- Available drivers will be populated here -->
+                </div>
+                
+                <button type="submit" class="btn-primary">Send Load Information</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Driver Profile Modal -->
+    <div id="driver-profile-modal" class="modal hidden" style="display: none;">
+        <div class="modal-content profile-modal">
+            <span class="close-modal" data-modal="driver-profile-modal">&times;</span>
+            <div class="profile-header">
+                <div class="profile-image">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="profile-title">
+                    <h2 id="profile-driver-name">Driver Name</h2>
+                    <span id="profile-driver-status" class="status">Status</span>
+                </div>
+            </div>
+            
+            <div class="profile-content">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="personal-info">Personal Info</button>
+                    <button class="tab-btn" data-tab="license-cert">License & Certifications</button>
+                    <button class="tab-btn" data-tab="employment">Employment Terms</button>
+                    <button class="tab-btn" data-tab="vehicle-maintenance">Vehicle & Maintenance</button>
+                    <button class="tab-btn" data-tab="insurance">Insurance & Liability</button>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Personal Information Tab -->
+                    <div id="personal-info" class="tab-pane active">
+                        <h3>Driver's Personal Information</h3>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Full Name:</span>
+                                <span id="profile-full-name" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Phone:</span>
+                                <span id="profile-phone" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Email:</span>
+                                <span id="profile-email" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Address:</span>
+                                <span id="profile-address" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Date of Birth:</span>
+                                <span id="profile-dob" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Emergency Contact:</span>
+                                <span id="profile-emergency-contact" class="info-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <h4>Identification Documents</h4>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">ID Type:</span>
+                                <span id="profile-id-type" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">ID Number:</span>
+                                <span id="profile-id-number" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Expiry Date:</span>
+                                <span id="profile-id-expiry" class="info-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- License & Certifications Tab -->
+                    <div id="license-cert" class="tab-pane">
+                        <h3>License & Certifications</h3>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Driver License Number:</span>
+                                <span id="profile-license-number" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">License Class:</span>
+                                <span id="profile-license-class" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Issued Date:</span>
+                                <span id="profile-license-issued" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Expiry Date:</span>
+                                <span id="profile-license-expiry" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Issuing Authority:</span>
+                                <span id="profile-license-authority" class="info-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <h4>Endorsements & Certifications</h4>
+                        <div class="info-group" id="profile-endorsements">
+                            <!-- Endorsements will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Employment Terms Tab -->
+                    <div id="employment" class="tab-pane">
+                        <h3>Employment Terms</h3>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Contract Type:</span>
+                                <span id="profile-contract-type" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Start Date:</span>
+                                <span id="profile-start-date" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">End Date:</span>
+                                <span id="profile-end-date" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Working Hours:</span>
+                                <span id="profile-working-hours" class="info-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <h4>Compensation</h4>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Payment Type:</span>
+                                <span id="profile-payment-type" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Base Rate:</span>
+                                <span id="profile-base-rate" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Overtime Rate:</span>
+                                <span id="profile-overtime-rate" class="info-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <h4>Benefits</h4>
+                        <div class="info-group" id="profile-benefits">
+                            <!-- Benefits will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Vehicle & Maintenance Tab -->
+                    <div id="vehicle-maintenance" class="tab-pane">
+                        <h3>Vehicle Usage & Maintenance</h3>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Assigned Vehicle:</span>
+                                <span id="profile-assigned-vehicle" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Vehicle Model:</span>
+                                <span id="profile-vehicle-model" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Vehicle Year:</span>
+                                <span id="profile-vehicle-year" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">License Plate:</span>
+                                <span id="profile-license-plate" class="info-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <h4>Maintenance Responsibilities</h4>
+                        <div class="info-group" id="profile-maintenance">
+                            <!-- Maintenance details will be populated here -->
+                        </div>
+                        
+                        <h4>Reporting Procedures</h4>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Damage Reporting:</span>
+                                <span id="profile-damage-reporting" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Maintenance Schedule:</span>
+                                <span id="profile-maintenance-schedule" class="info-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Insurance & Liability Tab -->
+                    <div id="insurance" class="tab-pane">
+                        <h3>Insurance & Liability</h3>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Insurance Provider:</span>
+                                <span id="profile-insurance-provider" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Policy Number:</span>
+                                <span id="profile-policy-number" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Coverage Type:</span>
+                                <span id="profile-coverage-type" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Coverage Amount:</span>
+                                <span id="profile-coverage-amount" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Deductible:</span>
+                                <span id="profile-deductible" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Expiry Date:</span>
+                                <span id="profile-insurance-expiry" class="info-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <h4>Liability Clauses</h4>
+                        <div class="info-group">
+                            <div class="info-item">
+                                <span class="info-label">Accident Liability:</span>
+                                <span id="profile-accident-liability" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Damage Policy:</span>
+                                <span id="profile-damage-policy" class="info-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html> 

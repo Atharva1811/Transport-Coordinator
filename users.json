@@ -1,0 +1,14 @@
+{
+    "users": [
+        {
+            "username": "transport",
+            "password": "transport123",
+            "role": "transport"
+        },
+        {
+            "username": "driver",
+            "password": "driver123",
+            "role": "driver"
+        }
+    ]
+} 
